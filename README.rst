@@ -45,7 +45,7 @@ blog/index.html      http://127.0.0.1:5000/blog
 blog/post.html       http://127.0.0.1:5000/blog/post
 ==================== ====================================
 
-*Note: The server will accept template URL's with or without .html appended to them*
+*Note: The server will accept template URLs with or without .html appended to them*
     
 Advanced
 --------
