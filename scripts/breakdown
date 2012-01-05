@@ -5,7 +5,7 @@
     Lightweight jinja2 template prototyping server with support for
     some custom template tags
 """
-VERSION = (0, 9, 7)
+VERSION = (0, 9, 8)
 
 import os
 import errno
@@ -65,10 +65,14 @@ def ext_image(width, height):
 
     return Markup(u'<img src="%s%s">' % (STATIC_URL, filename))
 
-def ext_greeking(mode=None):
+min_func = min
+max_func = max
+def ext_greeking(mode=None, min=50, max=100):
     """ Generate a block of various HTML text """
     # Get a blob of lipsum
-    blob = env.globals['lipsum'](html=False, n=1, min=50, max=100).split(' ')
+    minimum = max_func(min, 6*4)
+    maximum = max_func(max, minimum+1)
+    blob = env.globals['lipsum'](html=False, n=1, min=minimum, max=maximum).split(' ')
 
     # Wrap text in HTML elements at random points
     wrappers = [
@@ -78,11 +82,11 @@ def ext_greeking(mode=None):
         ('<a href="#">', '</a>'),
     ]
     random.shuffle(wrappers)
-    thresh = 7
+    thresh = 5
     pointers = random.sample(xrange(len(blob)/thresh), len(wrappers))
     for i, ptr in enumerate(pointers):
         ptr = ptr * thresh
-        length = random.randint(2, thresh - 2)
+        length = random.randint(2, thresh)
         blob[ptr] = wrappers[i][0] + blob[ptr]
         blob[ptr+length] = wrappers[i][1] + blob[ptr+length]
 
