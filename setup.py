@@ -5,11 +5,11 @@ from setuptools import setup
 setup(
     # Metadata
     name='breakdown',
-    version='0.9.8',
+    version='1.0.0',
     description='Lightweight jinja2 template prototyping server',
     long_description=open('README.rst').read(),
     author='Concentric Sky',
-    author_email='jbothun@concentricsky.com',
+    author_email='code@concentricsky.com',
     classifiers=[
         'Environment :: Console',
         'Operating System :: MacOS :: MacOS X',
