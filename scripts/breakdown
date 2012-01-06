@@ -22,8 +22,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-VERSION = (1,0,0)
-
 import os
 import errno
 import sys
@@ -37,6 +35,7 @@ import socket
 import BaseHTTPServer
 import tempfile
 import clevercss
+import breakdown
 
 # Server settings
 ADDR = ''
@@ -60,7 +59,6 @@ image_cache = tempfile.mkdtemp()
 
 Markup = jinja2._markupsafe.Markup
 import Image
-import breakdown
 
 def ext_image(width, height):
     """ Generate a custom-sized sample image """
@@ -258,7 +256,7 @@ def compile_clever_css(src, dst):
     return dst
 
 def ver(self, opt, value, parser):
-    print '.'.join(map(str, VERSION))
+    print '.'.join(map(str, breakdown.VERSION))
     sys.exit()
 
 def export(outroot):

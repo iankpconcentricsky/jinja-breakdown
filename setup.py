@@ -1,11 +1,21 @@
 #!/usr/bin/env python
 
 from setuptools import setup
+import breakdown
+
+version = '.'.join(map(str, breakdown.VERSION))
+
+try:
+    longdesc = open('README.rst').read()
+except Exception:
+    longdesc = ('Breakdown is a lightweight python webserver that parses ' 
+                'jinja2 templates. It\'s intended to be used by designers '
+                'in rapid prototyping.')
 
 setup(
     # Metadata
     name='breakdown',
-    version='1.0.0',
+    version=version,
     description='Lightweight jinja2 template prototyping server',
     long_description=open('README.rst').read(),
     author='Concentric Sky',
