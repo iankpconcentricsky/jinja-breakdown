@@ -58,7 +58,6 @@ image_cache = tempfile.mkdtemp()
 # --------- Jinja2 functions ------------
 
 Markup = jinja2._markupsafe.Markup
-import Image
 
 def ext_image(width, height):
     """ Generate a custom-sized sample image """
@@ -72,11 +71,19 @@ def ext_image(width, height):
         # Generate new image
         sample = breakdown.pkg_path('img/sample.png')
         if not os.path.exists(sample):
-            return Markup(u'<img>')
+            return Markup(u'<img/>')
         else:
-            source = Image.open(sample)
-            scaled = source.resize(size, Image.BICUBIC)
-            scaled.save(path)
+            try:
+                # Try scaling the image using PIL
+                import Image
+                source = Image.open(sample)
+                scaled = source.resize(size, Image.BICUBIC)
+                scaled.save(path)
+            except ImportError:
+                # If we couldnt find PIL, just copy the image
+                inf = open(sample, 'rb')
+                outf = open(path, 'wb')
+                outf.write(inf.read())
 
     return Markup(u'<img src="%s%s">' % (STATIC_URL, filename))
 

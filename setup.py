@@ -29,7 +29,7 @@ setup(
         'Framework :: Django',
         'Topic :: Text Processing :: Markup :: HTML'
     ],
-    install_requires=['jinja2>=2.6', 'CleverCSS', 'PIL'],
+    install_requires=['jinja2>=2.6', 'CleverCSS'],
 
     # Program data
     scripts=['scripts/breakdown'],
