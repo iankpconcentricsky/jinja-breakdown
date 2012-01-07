@@ -1,11 +1,11 @@
 Description
------------
+===========
 
 Breakdown is a lightweight python webserver that parses jinja2 templates.  It's intended to be used by designers for doing rapid prototyping.
 
 
 Basic Usage
-------------
+===========
 
 Breakdown needs a ``templates`` directory and a ``static`` directory to serve from.  If your working directory contains these, you can simply run breakdown with no arguments::
 
@@ -26,7 +26,6 @@ Breakdown will also work with a django project structure.  If the project path c
       /Users/josh/django/myproject/apps/blog/static
       /Users/josh/django/myproject/apps/mainsite/static
 
-
 Viewing Templates
 -----------------
 
@@ -46,14 +45,39 @@ blog/post.html       http://127.0.0.1:5000/blog/post
 ==================== ====================================
 
 *Note: The server will accept template URLs with or without .html appended to them*
+
+Additional Features
+===================
+
+Template tags
+-------------
+
+For convenience, A few template functions have been added to the `jinja2 template API <http://jinja.pocoo.org/docs/templates/>`_:
+
+################
+{{ greeking() }}
+################
+
+Generates a block of randomized lorem ipsum text marked-up with various HTML elements: ``<em>``, ``<strong>``, ``<code>``, ``<a>``, ``<ol>``, and ``<ul>``.
+
+##########################
+{{ image(width, height) }}
+##########################
+
+If you have `PIL <http://www.pythonware.com/products/pil/>`_ installed, you can use this function to generate an ``<img>`` tag with a sample image of the specified size (without PIL, the width/height are ignored and you get a large sample image)
+
+CleverCSS
+---------
+
+Breakdown also supports automatic `CleverCSS <http://http://sandbox.pocoo.org/clevercss/>`_ parsing.  If the file ``foo.css`` is requested and not found, breakdown will then look for a matching ``foo.clevercss`` and compile it to vanilla css on the fly.
+
     
 Advanced
---------
+========
 
 **Command line options**:
   -h, --help            show this help message and exit
   -p PORT, --port=PORT  run server on an alternate port (default is 5000)
   -m, --media           treat MEDIA_URL as STATIC_URL in templates
   -v, --version         display the version number and exit
-
 
