@@ -1,0 +1,50 @@
+<html>
+
+
+<head>
+    <style type="text/css">
+
+    body
+    {
+        font-family: Verdana, sans-serif;
+        font-size: 16;
+    }
+
+    td.key
+    {
+        background-color: #c9f1f6;
+    }
+
+    td.val
+    {
+        background-color: #dbdbdb;
+    }
+
+    </style>
+</head>
+
+
+
+<body>
+    <h1>Error</h1>
+    <table cellspacing="5" cellpadding="5">
+        <tr>
+            <td class="key">File</td>
+            <td class="val">{{ error.filename }}</td>
+        </tr>
+        <tr>
+            <td class="key">Line</td>
+            <td class="val">{{ error.lineno }}</td>
+        </tr>
+        <tr>
+            <td class="key">Code</td>
+            <td class="val"><pre>{{ error.source }}</pre></td>
+        </tr>
+        <tr>
+            <td class="key">Error</td>
+            <td class="val">{{ error.message }}</td>
+        </tr>
+    </table>
+</body>
+
+</html>

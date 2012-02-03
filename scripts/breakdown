@@ -1,11 +1,9 @@
 #!/usr/bin/env python
 """ 
-    Breakdown.py - 2011 Concentric Sky
+Breakdown.py - 2011 Concentric Sky
 
-    Lightweight jinja2 template prototyping server with support for
-    some custom template tags
-
-
+Lightweight jinja2 template prototyping server with support for
+some custom template tags
 
 Copyright 2011 Concentric Sky, Inc. 
 
@@ -35,115 +33,38 @@ import socket
 import BaseHTTPServer
 import tempfile
 import clevercss
+
 import breakdown
+from breakdown import templatetags
+from breakdown import ADDR, PORT, STATIC_URL, BASE_CONTEXT, pkg_path
 
-# Server settings
-ADDR = ''
-PORT = 5000
-STATIC_URL = '/static/'
-
-# Base context for templates
-base_context = {
-    'STATIC_URL': STATIC_URL,
-}
 
 # Server directories
 template_dirs = []
 static_dirs = []
 
-# Temporary directory to cache sample images
-image_cache = tempfile.mkdtemp()
-
-
-# --------- Jinja2 functions ------------
-
-Markup = jinja2._markupsafe.Markup
-
-def ext_image(width, height):
-    """ Generate a custom-sized sample image """
-    # Create unique path
-    size = (width, height)
-    filename = '%sx%s.png' % (width, height)
-    path = os.path.join(image_cache, filename)
-
-    # Check if image has already been created
-    if not os.path.exists(path):
-        # Generate new image
-        sample = breakdown.pkg_path('img/sample.png')
-        if not os.path.exists(sample):
-            return Markup(u'<img/>')
-        else:
-            try:
-                # Try scaling the image using PIL
-                import Image
-                source = Image.open(sample)
-                scaled = source.resize(size, Image.BICUBIC)
-                scaled.save(path)
-            except ImportError:
-                # If we couldnt find PIL, just copy the image
-                inf = open(sample, 'rb')
-                outf = open(path, 'wb')
-                outf.write(inf.read())
-
-    return Markup(u'<img src="%s%s">' % (STATIC_URL, filename))
-
-min_func = min
-max_func = max
-def ext_greeking(mode=None, min=50, max=100):
-    """ Generate a block of various HTML text """
-    # Get a blob of lipsum
-    minimum = max_func(min, 6*4)
-    maximum = max_func(max, minimum+1)
-    blob = env.globals['lipsum'](html=False, n=1, min=minimum, max=maximum).split(' ')
-
-    # Wrap text in HTML elements at random points
-    wrappers = [
-        ('<strong>', '</strong>'),
-        ('<em>', '</em>'),
-        ('<code>', '</code>'),
-        ('<a href="#">', '</a>'),
-    ]
-    random.shuffle(wrappers)
-    thresh = 5
-    pointers = random.sample(xrange(len(blob)/thresh), len(wrappers))
-    for i, ptr in enumerate(pointers):
-        ptr = ptr * thresh
-        length = random.randint(2, thresh)
-        blob[ptr] = wrappers[i][0] + blob[ptr]
-        blob[ptr+length] = wrappers[i][1] + blob[ptr+length]
-
-    html = '<p>' + ' '.join(blob) + '</p>'
-
-    # Generate random lists
-    lists = []
-    for type in ('ul', 'ol'):
-        items = []
-        for i in range(random.randint(3, 4)):
-            items.append('<li>%s</li>' % env.globals['lipsum'](html=False, n=1, min=5, max=10))
-        lists.append(items)
-
-    html += """
-    <ul>
-        %s
-    </ul>
-
-    <ol>
-        %s
-    </ol>
-    """ % ('\n'.join(lists[0]), '\n'.join(lists[1]))
-
-    return Markup(unicode(html))
-
-# ---------------------------------------
-
 
 class BreakdownHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     """ Custom request handler """
+
+    def ok_header(self):
+        """ Send a success HTML header and set contenttype """
+        self.send_response(httplib.OK)
+        self.send_header('Content-Type', 'text/html; charset=utf-8')
+        self.end_headers()
 
     def not_found(self):
         """ Standard 404 response """
         self.send_error(httplib.NOT_FOUND, 'Document not found: %s' % self.path)
         return False
+
+    def display_error(self, error):
+        """ Render a jinja2 template error """
+        self.ok_header()
+        template = error_env.get_template('error.html')
+        context = {'error': error}
+        data = template.render(context)
+        self.wfile.write(data.encode('utf-8'))
 
     def serve_static(self, path):
         """ Return data from path based on its guessed MIME Type """
@@ -168,19 +89,18 @@ class BreakdownHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         try:
             # Attempt to open template
             template = env.get_template(path)
+            data = template.render(BASE_CONTEXT)
 
-            # Send a success HTML header
-            self.send_response(httplib.OK)
-            self.send_header('Content-Type', 'text/html; charset=utf-8')
-            self.end_headers()
-
-            # Render the template with jinja2 and write to stream
-            data = template.render(base_context)
+            # Write data
+            self.ok_header()
             self.wfile.write(data.encode('utf-8'))
             return
 
         except (jinja2.TemplateNotFound, IOError):
             return self.not_found()
+
+        except jinja2.TemplateSyntaxError, e:
+            self.display_error(e)
 
     def do_GET(self):
         """ Handle a GET request """
@@ -203,6 +123,8 @@ class BreakdownHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 if path.endswith('/'):
                     path = path[:-1]
                 self.serve_template(path + '.html')
+            except jinja2.TemplateSyntaxError, e:
+                self.display_error(e)
 
 def mkdirp(path):
     try:
@@ -291,7 +213,7 @@ def export(outroot):
 
                         # Render the template
                         t = env.get_template(relpath)
-                        data = t.render(base_context)
+                        data = t.render(BASE_CONTEXT)
                         fh = open(outpath, 'w')
                         fh.write(data.encode('utf-8'))
                         fh.close()
@@ -332,7 +254,7 @@ if __name__ == '__main__':
 
     if options.media:
         # Update context
-        base_context['MEDIA_URL'] = STATIC_URL
+        BASE_CONTEXT['MEDIA_URL'] = STATIC_URL
     
     if options.port:
         try:
@@ -376,15 +298,22 @@ if __name__ == '__main__':
               'for a usage guide.')
         sys.exit(1)
 
+    # Create image cache
+    image_cache = tempfile.mkdtemp()
+
     # Setup jinja2 global and register extension functions
     env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dirs))
-    env.globals['image'] = ext_image
-    env.globals['greeking'] = ext_greeking
+    env.globals['greeking'] = templatetags.greeking
+    env.globals['image'] = lambda width, height: templatetags.image(image_cache, width, height)
+
+    # Setup breakdown env for error templates
+    error_env = jinja2.Environment(loader=jinja2.FileSystemLoader(pkg_path('templates')))
 
     # Run program
     if options.export:
         # Export static HTML
         export(options.export)
+
     else:
         # Show directories
         print 'Serving templates from:\n  ' + '\n  '.join(template_dirs) + '\n'

@@ -34,5 +34,5 @@ setup(
     # Program data
     scripts=['scripts/breakdown'],
     packages=['breakdown'],
-    package_data={'breakdown': ['img/*']},
+    package_data={'breakdown': ['img/*', 'templates/*']},
 )
