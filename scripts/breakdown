@@ -36,6 +36,7 @@ import BaseHTTPServer
 import tempfile
 import clevercss
 import breakdown
+import json
 
 # Server settings
 ADDR = ''
@@ -140,6 +141,10 @@ def ext_greeking(mode=None, min=50, max=100):
 class BreakdownHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     """ Custom request handler """
 
+    def get_context_path(self, template_path):
+        result = os.path.join(context_path, template_path[1:].replace('.html', '.json'))
+        return result
+
     def not_found(self):
         """ Standard 404 response """
         self.send_error(httplib.NOT_FOUND, 'Document not found: %s' % self.path)
@@ -168,6 +173,8 @@ class BreakdownHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         try:
             # Attempt to open template
             template = env.get_template(path)
+            context_path = self.get_context_path(path)
+            ctx = dict(base_context.items() + load_context(context_path).items())
 
             # Send a success HTML header
             self.send_response(httplib.OK)
@@ -175,7 +182,7 @@ class BreakdownHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.end_headers()
 
             # Render the template with jinja2 and write to stream
-            data = template.render(base_context)
+            data = template.render(ctx)
             self.wfile.write(data.encode('utf-8'))
             return
 
@@ -203,6 +210,22 @@ class BreakdownHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 if path.endswith('/'):
                     path = path[:-1]
                 self.serve_template(path + '.html')
+
+def json_obj_hook(o):
+    for key in o.keys():
+        val = o[key]
+        if key[-2:] == '()':
+            o[key[:-2]] = lambda *args, **kwargs: val
+    return o
+
+def load_context(path):
+    try:
+        result = json.load(open(path), object_hook=json_obj_hook)
+        return result or {}
+    except IOError:
+        print sys.exc_info()
+        return {}
+
 
 def mkdirp(path):
     try:
@@ -291,7 +314,9 @@ def export(outroot):
 
                         # Render the template
                         t = env.get_template(relpath)
-                        data = t.render(base_context)
+                        context_path = self.get_context_path(relpath)
+                        ctx = dict(base_context.items() + load_context(context_path).items())
+                        data = t.render(ctx)
                         fh = open(outpath, 'w')
                         fh.write(data.encode('utf-8'))
                         fh.close()
@@ -319,6 +344,8 @@ if __name__ == '__main__':
                   'instead of running the server. (experimental)')
     op.add_option('-v', '--version', action='callback', callback=ver,
                   help='display the version number and exit')
+    op.add_option('-c', '--context_dir_name', dest='context_dir_name',
+                  help='set the directory name to be searched for context object files (default is context)')
 
     # Parse arguments
     (options, args) = op.parse_args()
@@ -370,6 +397,10 @@ if __name__ == '__main__':
         if os.path.exists(s):
                 register_static_dir(s)
 
+    template_dir_name = 'templates'
+    context_dir_name = options.context_dir_name or 'context'
+    context_path = os.path.join(root, context_dir_name)
+
     if len(template_dirs) < 1:
         print('No template directories found.  Make sure to run breakdown from a project '
               'root, or specify the path to a project root as an argument.  See the README '
@@ -380,6 +411,7 @@ if __name__ == '__main__':
     env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dirs))
     env.globals['image'] = ext_image
     env.globals['greeking'] = ext_greeking
+    env.globals['url'] = lambda x, *args, **kwargs: '#'
 
     # Run program
     if options.export:
