@@ -105,9 +105,9 @@ Generates a block of randomized lorem ipsum text marked-up with various HTML ele
 
 If you have `PIL <http://www.pythonware.com/products/pil/>`_ installed, you can use this function to generate an ``<img>`` tag with a sample image of the specified size (without PIL, the width/height are ignored and you get a large sample image)
 
-##########################
-{{ url(*args, **kwargs) }}
-##########################
+#############################
+{{ url(\*args, \*\*kwargs) }}
+#############################
 
 Ignores all arguments and returns ``'#'``.
 
