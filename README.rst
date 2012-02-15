@@ -26,6 +26,45 @@ Breakdown will also work with a django project structure.  If the project path c
       /Users/josh/django/myproject/apps/blog/static
       /Users/josh/django/myproject/apps/mainsite/static
 
+Template Context Objects
+------------------------
+
+When loading a template, breakdown will attempt to load a json dictionary of the same name from the context directory (``context`` by default) and add it to the page context. For example, when loading ``base.html`` breakdown will try to load ``<project root>/context/base.json``, and when loading ``blog/article_detail.html`` breakdown will look for ``<project root>/context/blog/article_detail.json``.
+
+Objects defined in a context dictionary become available to the template.  For example, if we define ``base.json`` like this::
+
+    {
+     "request": {
+        "user": {
+             "name":"Austin",
+             "member": "Member #4812"
+         }
+     },
+     "object": {
+        "id": 555,
+        "title": "Excellent Blog Post"
+     }
+    }
+
+then ``request`` and ``object`` become available to the ``base.html`` template, and ``{{request.user.name}}`` yields ``Austin``.
+
+You can specify a function by adding a key with trailing parentheses::
+
+    {
+     "request": {
+        "user": {
+             "name":"Austin",
+             "is_authenticated()": true,
+             "birth_year()": 1982,
+             "middle_name()": "David",
+             "member": "Member #4812"
+         }
+     }
+    }
+
+The trailing parentheses are removed, and now ``{{request.user.is_authenticated()}}`` returns ``True``.  Functions defined in this way ignore any arguments and return the value specified in the json dictionary. ``{{request.user.is_authenticated(arg1, arg2, arg3)}}`` also returns ``True``.
+
+
 Viewing Templates
 -----------------
 
@@ -66,6 +105,12 @@ Generates a block of randomized lorem ipsum text marked-up with various HTML ele
 
 If you have `PIL <http://www.pythonware.com/products/pil/>`_ installed, you can use this function to generate an ``<img>`` tag with a sample image of the specified size (without PIL, the width/height are ignored and you get a large sample image)
 
+##########################
+{{ url(*args, **kwargs) }}
+##########################
+
+Ignores all arguments and returns ``'#'``.
+
 CleverCSS
 ---------
 
@@ -76,8 +121,9 @@ Advanced
 ========
 
 **Command line options**:
-  -h, --help            show this help message and exit
-  -p PORT, --port=PORT  run server on an alternate port (default is 5000)
-  -m, --media           treat MEDIA_URL as STATIC_URL in templates
-  -v, --version         display the version number and exit
+  -h, --help                        show this help message and exit
+  -p PORT, --port=PORT              run server on an alternate port (default is 5000)
+  -m, --media                       treat MEDIA_URL as STATIC_URL in templates
+  -v, --version                     display the version number and exit
+  -c DIR, --context_dir_name=DIR    set the directory name for context object files (default is ``context``)
 
