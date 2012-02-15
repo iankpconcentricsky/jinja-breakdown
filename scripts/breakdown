@@ -211,11 +211,13 @@ class BreakdownHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                     path = path[:-1]
                 self.serve_template(path + '.html')
 
+def _gen_lambda(x):
+    return lambda *args, **kwargs: x
+    
 def json_obj_hook(o):
-    for key in o.keys():
-        val = o[key]
+    for key,val in o.items():
         if key[-2:] == '()':
-            o[key[:-2]] = lambda *args, **kwargs: val
+            o[key[:-2]] = _gen_lambda(val)
     return o
 
 def load_context(path):
