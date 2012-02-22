@@ -34,6 +34,7 @@ import BaseHTTPServer
 import tempfile
 import clevercss
 import json
+import functools
 
 import breakdown
 from breakdown import templatetags
@@ -97,7 +98,7 @@ class BreakdownHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
             # Build context
             context_path = self.get_context_path(path)
-            ctx = dict(BASE_CONTEXT.items() + load_context(context_path).items())
+            ctx = dict(BASE_CONTEXT.items() + load_context(base_context_path).items() + load_context(context_path).items() )
 
             # Render the template with jinja2 and write to stream
             self.ok_header()
@@ -148,10 +149,18 @@ def load_context(path):
     try:
         result = json.load(open(path), object_hook=json_obj_hook)
         return result or {}
-    except IOError:
+    except (IOError, ValueError):
         print sys.exc_info()
         return {}
 
+def load_filters(env, path):
+    try:
+        result = json.load(open(path), object_hook=json_obj_hook)
+        for name, val in result.items():
+            env.filters[name] = val
+    except IOError:
+        print sys.exc_info()
+        return {}
 
 def mkdirp(path):
     try:
@@ -241,7 +250,7 @@ def export(outroot):
                         # Render the template
                         t = env.get_template(relpath)
                         context_path = self.get_context_path(relpath)
-                        ctx = dict(BASE_CONTEXT.items() + load_context(context_path).items())
+                        ctx = dict(BASE_CONTEXT.items() + load_context(base_context_path).items() + load_context(context_path).items() )
                         data = t.render(ctx)
                         fh = open(outpath, 'w')
                         fh.write(data.encode('utf-8'))
@@ -326,6 +335,8 @@ if __name__ == '__main__':
     template_dir_name = 'templates'
     context_dir_name = options.context_dir_name or 'context'
     context_path = os.path.join(root, context_dir_name)
+    base_context_path = os.path.join(context_path, 'base.json')
+    filters_path = os.path.join(context_path, 'filters.json')
 
     if len(template_dirs) < 1:
         print('No template directories found.  Make sure to run breakdown from a project '
@@ -341,6 +352,7 @@ if __name__ == '__main__':
     env.globals['greeking'] = templatetags.greeking
     env.globals['image'] = lambda width, height: templatetags.image(image_cache, width, height)
     env.globals['url'] = lambda x, *args, **kwargs: '#'
+    load_filters(env, filters_path)
 
     # Setup breakdown env for error templates
     error_env = jinja2.Environment(loader=jinja2.FileSystemLoader(pkg_path('templates')))
