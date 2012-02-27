@@ -140,10 +140,24 @@ def _gen_lambda(x):
     return lambda *args, **kwargs: x
     
 def json_obj_hook(o):
+    # First, if a __unicode__ attribute was set on the context object, create
+    # an appropriate class on the fly since we can't set dict.__unicode__ directly
+    u = o.get('__unicode__') or o.get('__unicode__()')
+    if u is not None:
+        class O(dict):
+            def __unicode__(self):
+                return u
+        result = O()
+    else:
+        result = o
+
+    # Then, attach remaining attributes 
     for key,val in o.items():
         if key[-2:] == '()':
-            o[key[:-2]] = _gen_lambda(val)
-    return o
+            result[key[:-2]] = _gen_lambda(val)
+        else:
+            result[key] = val
+    return result
 
 def load_context(path):
     try:
