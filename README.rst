@@ -29,9 +29,13 @@ Breakdown will also work with a django project structure.  If the project path c
 Template Context Objects
 ------------------------
 
-When loading a template, breakdown will attempt to load a json dictionary of the same name from the context directory (``context`` by default) and add it to the page context. For example, when loading ``base.html`` breakdown will try to load ``<project root>/context/base.json``, and when loading ``blog/article_detail.html`` breakdown will look for ``<project root>/context/blog/article_detail.json``.
+You can define values for template variables by supplying a json dictionary for each page.
 
-Objects defined in a context dictionary become available to the template.  For example, if we define ``base.json`` like this::
+When loading a template, breakdown will attempt to load a json dictionary of the same name from the context directory (``context`` by default) and add it to the page context. For example, when loading ``blog/article_detail.html`` breakdown will look for ``<project root>/context/blog/article_detail.json``.  
+
+For all pages, breakdown also attempts to load ``<project root>/context/base.json``.  Any values defined here will be available on all pages, and will be overridden by any of the same name defined in individual page context objects.
+
+For example, if we define ``base.json`` like this::
 
     {
      "request": {
@@ -46,7 +50,7 @@ Objects defined in a context dictionary become available to the template.  For e
      }
     }
 
-then ``request`` and ``object`` become available to the ``base.html`` template, and ``{{request.user.name}}`` yields ``Austin``.
+then ``request`` and ``object`` become available to all templates, and ``{{request.user.name}}`` yields ``Austin``.
 
 You can specify a function by adding a key with trailing parentheses::
 
@@ -62,7 +66,46 @@ You can specify a function by adding a key with trailing parentheses::
      }
     }
 
-The trailing parentheses are removed, and now ``{{request.user.is_authenticated()}}`` returns ``True``.  Functions defined in this way ignore any arguments and return the value specified in the json dictionary. ``{{request.user.is_authenticated(arg1, arg2, arg3)}}`` also returns ``True``.
+The trailing parentheses are removed, and now ``{{request.user.is_authenticated()}}`` returns ``True``.  Functions defined in this way ignore any arguments and return the value specified in the json dictionary. ``{{request.user.is_authenticated(arg1, arg2, arg3)}}`` also returns ``True``. However, these functions cannot be used without parentheses and ``{{request.user.is_authenticated}}`` prints something like ``at 0x101f32f50>``.
+
+If you define a ``__unicode__`` or ``__unicode__()`` key, its value will be used when referencing its enclosing object directly.  With a context object such as either::
+
+    {
+      "request": {
+        "user": {
+             "name":"Austin",
+             "__unicode__": "User named Austin"
+         }
+     }
+    }
+
+or::
+
+    {
+      "request": {
+        "user": {
+             "name":"Austin",
+             "__unicode__()": "User named Austin"
+         }
+     }
+    }
+
+referencing ``{{request.user}}`` will yield ``User named Austin``.
+
+Breakdown does not support full context object inheritance, but top-level values defined for individual pages override those defined in ``base.json``.  If you define ``<project root>/context/blog/article_detail.json`` like this::
+
+    {
+      "blog": {
+        "title": "Skiing Blog"
+      },
+      "request": {
+        "user": {
+          "name": "Josh"
+        }
+      }
+    }
+
+then in ``/blog/article_detail.html`` a reference to ``{{request.user.name}}`` will print ``Josh``, ``{{request.user.birth_year}}`` is blank, and ``{{request.user}}`` yields ``{u'name': u'Josh'}``.
 
 
 Viewing Templates
