@@ -71,7 +71,7 @@ class BreakdownHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def display_error(self, error):
         """ Render a jinja2 template error """
         self.ok_header()
-        template = error_env.get_template('error.html')
+        template = breakdown_env.get_template('error.html')
         context = {'error': error}
         data = template.render(context)
         self.wfile.write(data.encode('utf-8'))
@@ -116,6 +116,20 @@ class BreakdownHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         except jinja2.TemplateSyntaxError, e:
             self.display_error(e)
 
+    
+    def serve_list(self, path):
+        """ Display a simple list of templates beginning with `path` """
+        templates = filter(lambda template_path: template_path.startswith(path), self.template_list)
+        list_template = breakdown_env.get_template('list.html')
+        context = {
+            'templates': templates,
+        }
+        data = list_template.render(context)
+        self.ok_header()
+        self.wfile.write(data.encode('utf-8'))
+        return
+
+
     def do_GET(self):
         """ Handle a GET request """
         # Check first for static requests
@@ -136,6 +150,10 @@ class BreakdownHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         ):
             if res in self.template_list:
                 return self.serve_template(res)
+        
+        # Display a list view if any templates begin with path
+        if any(map(lambda template_path: template_path.startswith(path), self.template_list)):
+            return self.serve_list(path)
 
         # Finally 404
         return self.not_found()
@@ -373,7 +391,7 @@ if __name__ == '__main__':
     load_filters(env, filters_path)
 
     # Setup breakdown env for error templates
-    error_env = jinja2.Environment(loader=jinja2.FileSystemLoader(pkg_path('templates')))
+    breakdown_env = jinja2.Environment(loader=jinja2.FileSystemLoader(pkg_path('templates')))
 
     # Run program
     if options.export:
