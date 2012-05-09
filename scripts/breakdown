@@ -49,6 +49,10 @@ static_dirs = []
 class BreakdownHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     """ Custom request handler """
 
+    def __init__(self, *args, **kwargs):
+        BaseHTTPServer.BaseHTTPRequestHandler.__init__(self, *args, **kwargs)
+        self.template_list = []
+
     def ok_header(self):
         """ Send a success HTML header and set contenttype """
         self.send_response(httplib.OK)
@@ -114,27 +118,27 @@ class BreakdownHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
     def do_GET(self):
         """ Handle a GET request """
+        # Check first for static requests
         if self.path.startswith(STATIC_URL):
-            # Serve as static
             return self.serve_static(os.path.relpath(self.path, STATIC_URL))
-        elif self.path.endswith('.html'):
-            # Serve as template
-            return self.serve_template(self.path)
-        else:
-            # Try appending /index.html, or .html
-            try:
-                path = self.path
-                if not path.endswith('/'):
-                    path = path + '/'
-                env.get_template(path + 'index.html')
-                self.serve_template(path + 'index.html')
-            except jinja2.TemplateNotFound:
-                path = self.path
-                if path.endswith('/'):
-                    path = path[:-1]
-                self.serve_template(path + '.html')
-            except jinja2.TemplateSyntaxError, e:
-                self.display_error(e)
+
+        # Update template list
+        self.template_list = map(lambda path: '/%s' % path, env.list_templates())
+
+        # Strip slash
+        path = self.path.endswith('/') and self.path[:-1] or self.path
+
+        # Try various path resolutions
+        for res in (
+            path,
+            path + '.html',
+            path + '/index.html',
+        ):
+            if res in self.template_list:
+                return self.serve_template(res)
+
+        # Finally 404
+        return self.not_found()
 
 def _gen_lambda(x):
     return lambda *args, **kwargs: x
