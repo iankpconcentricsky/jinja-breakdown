@@ -105,8 +105,8 @@ class BreakdownHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             ctx = dict(BASE_CONTEXT.items() + load_context(base_context_path).items() + load_context(context_path).items() )
 
             # Render the template with jinja2 and write to stream
-            self.ok_header()
             data = template.render(ctx)
+            self.ok_header()
             self.wfile.write(data.encode('utf-8'))
             return
 
