@@ -186,7 +186,6 @@ def load_context(path):
         result = json.load(open(path), object_hook=json_obj_hook)
         return result or {}
     except (IOError, ValueError):
-        print sys.exc_info()
         return {}
 
 def load_filters(env, path):
@@ -195,7 +194,6 @@ def load_filters(env, path):
         for name, val in result.items():
             env.filters[name] = val
     except IOError:
-        print sys.exc_info()
         return {}
 
 def mkdirp(path):
