@@ -24,7 +24,7 @@ import os
 
 import jinja2
 import breakdown
-from breakdown import STATIC_URL
+from breakdown.settings import STATIC_URL
 
 __all__ = ['image', 'greeking']
 

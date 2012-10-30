@@ -21,8 +21,8 @@ limitations under the License.
 """
 
 import os
-import errno
 import sys
+import shutil
 import optparse
 import jinja2
 import httplib
@@ -37,8 +37,9 @@ import json
 import functools
 
 import breakdown
-from breakdown import templatetags
-from breakdown import ADDR, PORT, STATIC_URL, BASE_CONTEXT, pkg_path
+from breakdown.utils import mkdirp
+from breakdown import templatetags, pkg_path
+from breakdown.settings import ADDR, PORT, STATIC_URL, BASE_CONTEXT
 
 
 # Server directories
@@ -58,10 +59,6 @@ class BreakdownHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.send_response(httplib.OK)
         self.send_header('Content-Type', 'text/html; charset=utf-8')
         self.end_headers()
-
-    def get_context_path(self, template_path):
-        result = os.path.join(context_path, template_path[1:].replace('.html', '.json'))
-        return result
 
     def not_found(self):
         """ Standard 404 response """
@@ -101,8 +98,7 @@ class BreakdownHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             template = env.get_template(path)
 
             # Build context
-            context_path = self.get_context_path(path)
-            ctx = dict(BASE_CONTEXT.items() + load_context(base_context_path).items() + load_context(context_path).items() )
+            ctx = build_context(path)
 
             # Render the template with jinja2 and write to stream
             data = template.render(ctx)
@@ -181,6 +177,23 @@ def json_obj_hook(o):
             result[key] = val
     return result
 
+def get_context_path(template_path):
+    result = os.path.join(context_path, template_path[1:].replace('.html', '.json'))
+    return result
+
+def build_context(template_path):
+    """ 
+    Return a context dictionary assembled from three layers:
+        - Breakdown's BASE_CONTEXT
+        - context/base.json
+        - context for template
+    """
+    return dict(
+        BASE_CONTEXT.items() +
+        load_context(base_context_path).items() +
+        load_context(get_context_path(template_path)).items()
+    )
+
 def load_context(path):
     try:
         result = json.load(open(path), object_hook=json_obj_hook)
@@ -195,15 +208,6 @@ def load_filters(env, path):
             env.filters[name] = val
     except IOError:
         return {}
-
-def mkdirp(path):
-    try:
-        os.makedirs(path)
-    except OSError, e:
-        if e.errno == errno.EEXIST:
-            pass
-        else: 
-            raise
 
 def run_server():
     try:
@@ -260,39 +264,44 @@ def ver(self, opt, value, parser):
 
 def export(outroot):
     """ Render the template tree as static HTML """
-    if not os.path.exists(outroot):
-        try:
-            os.makedirs(outroot)
-        except OSError, e:
-            print 'Unable to create directory', e
-            sys.exit(1)
-    if not os.access(outroot, os.W_OK):
-        print 'Unable to write to output directory'
+    try:
+        mkdirp(outroot)
+    except OSError:
+        print "Unable to write to directory '%s'" % outroot
         sys.exit(1)
     
-    # Step through templates
+    # Render templates
     for dir in template_dirs:
         for root, dirs, files in os.walk(dir):
+            for file in filter(lambda f: f.endswith('.html'), files):
+                relpath = os.path.normpath(os.path.join(os.path.relpath(root, dir), file))
+                outpath = os.path.join(outroot, relpath)
+                try:
+                    # Create the parent directory
+                    mkdirp(os.path.dirname(outpath))
+
+                    # Render the template
+                    t = env.get_template(relpath)
+                    ctx = build_context(relpath)
+                    data = t.render(ctx)
+                    fh = open(outpath, 'w')
+                    fh.write(data.encode('utf-8'))
+                    fh.close()
+                    print 'Rendered template', outpath
+
+                except jinja2.TemplateNotFound:
+                    print 'Error loading template named', relpath
+
+    # Collect static
+    for dir in static_dirs:
+        for root, dirs, files in os.walk(dir):
             for file in files:
-                if file.endswith('.html'):
-                    relpath = os.path.normpath(os.path.join(os.path.relpath(root, dir), file))
-                    outpath = os.path.join(outroot, relpath)
-                    try:
-                        # Create the parent directory
-                        mkdirp(os.path.dirname(outpath))
-
-                        # Render the template
-                        t = env.get_template(relpath)
-                        context_path = self.get_context_path(relpath)
-                        ctx = dict(BASE_CONTEXT.items() + load_context(base_context_path).items() + load_context(context_path).items() )
-                        data = t.render(ctx)
-                        fh = open(outpath, 'w')
-                        fh.write(data.encode('utf-8'))
-                        fh.close()
-                        print 'Rendered template', outpath
-
-                    except jinja2.TemplateNotFound:
-                        print 'Error loading template named', relpath
+                abspath = os.path.join(root, file)
+                relpath = os.path.normpath(os.path.join(os.path.relpath(root, dir), file))
+                outpath = os.path.join(outroot, 'static', relpath)
+                mkdirp(os.path.dirname(outpath))
+                shutil.copyfile(abspath, outpath)
+                print "Created static file", outpath
 
 def register_template_dir(path):
     template_dirs.append(path)
@@ -310,7 +319,7 @@ if __name__ == '__main__':
                   help='treat MEDIA_URL as STATIC_URL in templates')
     op.add_option('-e', '--export', dest='export',
                   help='render templates to static html '
-                  'instead of running the server. (experimental)')
+                  'instead of running the server.')
     op.add_option('-v', '--version', action='callback', callback=ver,
                   help='display the version number and exit')
     op.add_option('-c', '--context_dir_name', dest='context_dir_name',

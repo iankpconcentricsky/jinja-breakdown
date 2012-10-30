@@ -21,16 +21,7 @@ limitations under the License.
 
 import os
 
-VERSION = (1, 0, 6)
+VERSION = (1, 0, 7)
 
 def pkg_path(path):
     return os.path.join(os.path.abspath(os.path.dirname(__file__)), path)
-
-
-# Default settings
-ADDR = ''
-PORT = 5000
-STATIC_URL = '/static/'
-BASE_CONTEXT = {
-    'STATIC_URL': STATIC_URL,
-}

@@ -159,6 +159,13 @@ CleverCSS
 
 Breakdown also supports automatic `CleverCSS <http://http://sandbox.pocoo.org/clevercss/>`_ parsing.  If the file ``foo.css`` is requested and not found, breakdown will then look for a matching ``foo.clevercss`` and compile it to vanilla css on the fly.
 
+Export mode
+-----------
+
+Breakdown can run in an alternate *export* mode which dumps all of the rendered templates to a directory that you specify.  It also collects all of your static files (similar to djangos ``collectstatic`` command) to a **static/** directory.  This mode can be enabled with ``-e`` and a path to export to; e.g.: ``breakdown -e output``
+
+**NOTE**: If you want to be able to browse the exported content from the file system directly, you should make sure that your links to other templates end with '.html'
+
     
 Advanced
 ========
@@ -169,4 +176,5 @@ Advanced
   -m, --media                       treat MEDIA_URL as STATIC_URL in templates
   -v, --version                     display the version number and exit
   -c DIR, --context_dir_name=DIR    set the directory name for context object files (default is ``context``)
+  -e DIR, --export=DIR              export HTML to directory instead of running server
 
