@@ -106,7 +106,14 @@ class BreakdownHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.wfile.write(data.encode('utf-8'))
             return
 
-        except (jinja2.TemplateNotFound, IOError):
+        except jinja2.TemplateNotFound as e:
+            if path != e.message:
+                return self.display_error(error={
+                    'filename': path,
+                    'message': 'template not found: %s' % e,
+                })
+            return self.not_found()
+        except IOError:
             return self.not_found()
 
         except jinja2.TemplateSyntaxError, e:
