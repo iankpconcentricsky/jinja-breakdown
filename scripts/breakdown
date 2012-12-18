@@ -373,6 +373,16 @@ if __name__ == '__main__':
                 register_template_dir(t)
             if os.path.exists(s):
                 register_static_dir(s)
+
+
+        # register ./breakdown/templates and ./breakdown/static if they exist
+        t = os.path.join(root, 'breakdown', 'templates')
+        s = os.path.join(root, 'breakdown', 'static')
+        if os.path.exists(t):
+            register_template_dir(t)
+        if os.path.exists(s):
+            register_static_dir(s)
+
     else:
         # Try simple directory structure--templates and static in toplevel
         t = os.path.join(root, 'templates')
