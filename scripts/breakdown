@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 """ 
-Breakdown.py - 2011 Concentric Sky
+Breakdown.py - 2013 Concentric Sky
 
 Lightweight jinja2 template prototyping server with support for
 some custom template tags
 
-Copyright 2011 Concentric Sky, Inc. 
+Copyright 2013 Concentric Sky, Inc. 
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ import json
 import functools
 
 import breakdown
-from breakdown.utils import mkdirp
+from breakdown.utils import mkdirp, force_padding
 from breakdown import templatetags, pkg_path
 from breakdown.settings import ADDR, PORT, STATIC_URL, BASE_CONTEXT
 
@@ -317,6 +317,8 @@ if __name__ == '__main__':
                   'alternate port (default is 5000)')
     op.add_option('-m', '--media', action='store_true', dest='media',
                   help='treat MEDIA_URL as STATIC_URL in templates')
+    op.add_option('-s', '--static-url', dest='static_url',
+                  help='override STATIC_URL (default is %s)' % STATIC_URL)
     op.add_option('-e', '--export', dest='export',
                   help='render templates to static html '
                   'instead of running the server.')
@@ -327,6 +329,9 @@ if __name__ == '__main__':
 
     # Parse arguments
     (options, args) = op.parse_args()
+
+    # Optionally override static URL and clean it up
+    STATIC_URL = force_padding(options.static_url or STATIC_URL, '/')
 
     # Setup path globals
     if len(args) > 0:

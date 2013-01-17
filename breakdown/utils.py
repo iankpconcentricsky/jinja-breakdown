@@ -10,3 +10,11 @@ def mkdirp(path):
             pass
         else: 
             raise
+
+
+def force_padding(s, pad):
+    if not s.startswith(pad):
+        s = pad + s
+    if not s.endswith(pad):
+        s = s + pad
+    return s
