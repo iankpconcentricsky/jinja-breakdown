@@ -174,6 +174,7 @@ Advanced
   -h, --help                        show this help message and exit
   -p PORT, --port=PORT              run server on an alternate port (default is 5000)
   -m, --media                       treat MEDIA_URL as STATIC_URL in templates
+  -s, --static-url                  override STATIC_URL (default is /static/)
   -v, --version                     display the version number and exit
   -c DIR, --context_dir_name=DIR    set the directory name for context object files (default is ``context``)
   -e DIR, --export=DIR              export HTML to directory instead of running server
