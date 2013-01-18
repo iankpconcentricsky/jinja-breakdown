@@ -39,7 +39,7 @@ import functools
 import breakdown
 from breakdown.utils import mkdirp, force_padding
 from breakdown import templatetags, pkg_path
-from breakdown.settings import ADDR, PORT, STATIC_URL, BASE_CONTEXT
+from breakdown.settings import ADDR, PORT, STATIC_URL
 
 
 # Server directories
@@ -339,6 +339,11 @@ if __name__ == '__main__':
     else:
         root = os.getcwd()
     root = os.path.abspath(root)
+
+    # Create base context
+    BASE_CONTEXT = {
+        'STATIC_URL': STATIC_URL,
+    }
 
     if options.media:
         # Update context
