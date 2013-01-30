@@ -116,14 +116,9 @@ class BreakdownHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def serve_list(self, path):
         """ Display a simple list of templates beginning with `path` """
         templates = filter(lambda template_path: template_path.startswith(path), self.template_list)
-        list_template = breakdown_env.get_template('list.html')
-        context = {
-            'templates': templates,
-        }
-        data = list_template.render(context)
+        data = render_listing(templates)
         self.ok_header()
         self.wfile.write(data.encode('utf-8'))
-        return
 
 
     def do_GET(self):
@@ -153,6 +148,17 @@ class BreakdownHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
         # Finally 404
         return self.not_found()
+
+
+def render_listing(templates):
+    """
+    Render a list view page given a set of templates
+    """
+    list_template = breakdown_env.get_template('list.html')
+    return list_template.render({
+        'templates': templates,
+    })
+
 
 def _gen_lambda(x):
     return lambda *args, **kwargs: x
@@ -262,6 +268,7 @@ def ver(self, opt, value, parser):
     print '.'.join(map(str, breakdown.VERSION))
     sys.exit()
 
+
 def export(outroot):
     """ Render the template tree as static HTML """
     try:
@@ -271,11 +278,13 @@ def export(outroot):
         sys.exit(1)
     
     # Render templates
+    templates = []
     for dir in template_dirs:
         for root, dirs, files in os.walk(dir):
             for file in filter(lambda f: f.endswith('.html'), files):
                 relpath = os.path.normpath(os.path.join(os.path.relpath(root, dir), file))
                 outpath = os.path.join(outroot, relpath)
+                templates.append(relpath)
                 try:
                     # Create the parent directory
                     mkdirp(os.path.dirname(outpath))
@@ -302,6 +311,15 @@ def export(outroot):
                 mkdirp(os.path.dirname(outpath))
                 shutil.copyfile(abspath, outpath)
                 print "Created static file", outpath
+
+    # Write a global template list view if an index.html does not exist
+    index = os.path.join(outroot, 'index.html')
+    if not os.path.exists(index):
+        fh = open(index, 'w')
+        fh.write(render_listing(templates))
+        fh.close()
+        print 'Rendered template', index
+
 
 def register_template_dir(path):
     template_dirs.append(path)
