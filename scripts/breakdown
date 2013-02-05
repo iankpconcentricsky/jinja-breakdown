@@ -184,7 +184,9 @@ def json_obj_hook(o):
     return result
 
 def get_context_path(template_path):
-    result = os.path.join(context_path, template_path[1:].replace('.html', '.json'))
+    if template_path.startswith('/'):
+        template_path = template_path[1:]
+    result = os.path.join(context_path, template_path.replace('.html', '.json'))
     return result
 
 def build_context(template_path):
