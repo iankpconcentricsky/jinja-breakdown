@@ -143,7 +143,7 @@ blog/post.html      | http://127.0.0.1:5000/blog/post
 ## Additional Features
 
 
-### Template tags
+### Template Tags
 
 For convenience, A few template functions have been added to the [jinja2 template API](http://jinja.pocoo.org/docs/templates/):
 
@@ -165,7 +165,7 @@ Ignores all arguments and returns ``'#'``.
 
 Breakdown also supports automatic [CleverCSS](http://http://sandbox.pocoo.org/clevercss/) parsing.  If the file ``foo.css`` is requested and not found, breakdown will then look for a matching ``foo.clevercss`` and compile it to vanilla css on the fly.
 
-### Export mode
+### Export Mode
 
 Breakdown can run in an alternate *export* mode which dumps all of the rendered templates to a directory that you specify.  It also collects all of your static files (similar to djangos ``collectstatic`` command) to a **static/** directory.  This mode can be enabled with ``-e`` and a path to export to; e.g.: ``breakdown -e output``
 
