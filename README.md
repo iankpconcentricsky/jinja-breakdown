@@ -6,6 +6,14 @@
 Jinja Breakdown is an open-source Python library developed by [Concentric Sky](http://concentricsky.com/). It is a lightweight python webserver that parses jinja2 templates.  It's intended to be used by designers for doing rapid prototyping.
 
 
+### Table of Contents
+- [Installation](#installation)
+- [Usage](#usage)
+- [Additional Features](#additional-features)
+- [License](#license)
+- [About Concentric Sky](#about-concentric-sky)
+
+
 ## Installation
 
 Install the package with pip:
@@ -172,9 +180,8 @@ Breakdown can run in an alternate *export* mode which dumps all of the rendered 
 **NOTE**: If you want to be able to browse the exported content from the file system directly, you should make sure that your links to other templates end with '.html'
 
     
-## Advanced
+### Advanced Command Line Options
 
-**Command line options**:
 ```
   -h, --help                        show this help message and exit
   -p PORT, --port=PORT              run server on an alternate port (default is 5000)
