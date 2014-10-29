@@ -23,12 +23,12 @@ import random
 import os
 
 import jinja2
+from markupsafe import Markup
 import breakdown
 from breakdown.settings import STATIC_URL
 
 __all__ = ['image', 'greeking']
 
-Markup = jinja2._markupsafe.Markup
 min_func = min
 max_func = max
 env = jinja2.Environment()
